@@ -147,10 +147,18 @@ class VatNumber extends TaxManagerModule
 		return (((int)$id_country && array_key_exists(Country::getIsoById($id_country), self::getPrefixIntracomVAT())) ? 1 : 0);
 	}
 
-	public static function WebServiceCheck($vat_number)
+	public static function WebServiceCheck($vat_number,$vat_country)
 	{
-		if (empty($vat_number))
-			return array();
+                if (empty($vat_number))
+                {
+                  if ($vat_country == '17')
+                  {
+                        return array(Tools::displayError('Sorry, due to VAT requirement changes with Brexit, we can no longer sell our products to UK consumers.'));
+                  } else
+                  {
+                        return array();
+                  }
+                }
 		$vat_number = str_replace(' ', '', $vat_number);
 		$prefix = Tools::substr($vat_number, 0, 2);
 		if (array_search($prefix, self::getPrefixIntracomVAT()) === false)
@@ -301,7 +309,8 @@ class VatNumber extends TaxManagerModule
 		$is_valid = true;
 
 		if (($vatNumber = $form->getField('vat_number')) && Configuration::get('VATNUMBER_MANAGEMENT') && Configuration::get('VATNUMBER_CHECKING')) {
-			$isAVatNumber = VatNumber::WebServiceCheck($vatNumber->getValue());
+                        $vatCountry = $form->getField('id_country'); // "17" = United Kingdom for our case
+                        $isAVatNumber = VatNumber::WebServiceCheck($vatNumber->getValue(),$vatCountry->getValue());			
 			if (is_array($isAVatNumber) && count($isAVatNumber) > 0) {
 				$vatNumber->addError($isAVatNumber[0]);
 				$is_valid = false;
